@@ -1,7 +1,9 @@
 import «LeanHovercraft»
 
 def main : IO Unit := do
-  println! ("3.1415926,3.1415926,3.1415926,3.1415926,3.1415926".toFloatArray)
+  let arr := "3.1415926,3.1415926535,3.1415926e123,-3.1415926,inf,nan".toFloatArray
+  for i in arr do
+    println! i.toStringInfinite
   -- println! 3.1415926.toStringFinite
   -- println! (1.0/0.0).toStringInfinite
   -- println! (1.0/0.0).toString
