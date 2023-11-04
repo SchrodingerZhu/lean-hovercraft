@@ -47,7 +47,9 @@ def objectFile (pkg : Package) (name : String) : SchedulerM (BuildJob FilePath) 
   buildO (name ++ ".cpp") oFile srcJob #[] (← flags) compiler
 
 target format.o pkg : FilePath := objectFile pkg "format"
+target parser.o pkg : FilePath := objectFile pkg "parser"
 extern_lib liblean_hovercraft.a pkg := do
   let name := nameToStaticLib "lean_hovercraft"
   let formatO ← fetch <| pkg.target ``format.o
-  buildStaticLib (pkg.nativeLibDir / name) #[formatO]
+  let parserO ← fetch <| pkg.target ``parser.o
+  buildStaticLib (pkg.nativeLibDir / name) #[formatO, parserO]
