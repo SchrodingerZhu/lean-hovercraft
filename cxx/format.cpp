@@ -5,7 +5,7 @@
 
 extern "C" size_t lean_hovercraft_format64(double x, char *buffer);
 
-static inline lean_obj_res prepare_for_modfication(lean_obj_arg o, size_t extra) {
+static inline lean_obj_res prepare_for_modification(lean_obj_arg o, size_t extra) {
     size_t sz  = lean_string_size(o);
     size_t cap = lean_string_capacity(o);
     size_t len = lean_string_len(o);
@@ -75,7 +75,7 @@ extern "C" LEAN_EXPORT lean_obj_res lean_hovercraft_float_to_string_infinite(dou
 extern "C" LEAN_EXPORT lean_obj_res lean_hovercraft_string_push_float_finite(lean_obj_arg s, double x) {
     size_t sz  = lean_string_size(s);
     size_t len = lean_string_len(s);
-    lean_obj_res r = prepare_for_modfication(s, 24);
+    lean_obj_res r = prepare_for_modification(s, 24);
     size_t consumed = lean_hovercraft_format64(x, const_cast<char*>(lean_string_cstr(r)) + sz - 1);
     lean_to_string(r)->m_size = sz + consumed;
     lean_to_string(r)->m_length += consumed;
@@ -89,7 +89,7 @@ extern "C" LEAN_EXPORT lean_obj_res lean_hovercraft_string_push_float_infinite(l
     } else {
         auto copy = [](lean_obj_res s, size_t extra, const char * data) LEAN_ALWAYS_INLINE {
           auto sz = lean_string_size(s);
-          auto r = prepare_for_modfication(s, extra);
+          auto r = prepare_for_modification(s, extra);
           for (size_t i = 0; i <= extra; i++) {
             const_cast<char*>(lean_string_cstr(r))[sz + i - 1] = data[i];
           }
