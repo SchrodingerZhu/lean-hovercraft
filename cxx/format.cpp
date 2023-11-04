@@ -35,16 +35,39 @@ extern "C" LEAN_EXPORT lean_obj_res lean_hovercraft_float_to_string_finite(doubl
     return r;
 }
 
+#define LEAN_HOVERCRAFT_MK_CONSTANT_STRING(name, value) \
+  static struct { \
+    lean_string_object m_string; \
+    char data[sizeof(value)]; \
+  } const_##name##_str = { \
+    .m_string = { \
+      .m_header = { \
+        .m_rc = 0, \
+        .m_cs_sz = 0, \
+        .m_other = 0, \
+        .m_tag = LeanString, \
+      }, \
+      .m_size = sizeof(value), \
+      .m_capacity = sizeof(value), \
+      .m_length = sizeof(value) - 1, \
+    }, \
+    .data = value, \
+  }
+
+LEAN_HOVERCRAFT_MK_CONSTANT_STRING(nan, "NaN");
+LEAN_HOVERCRAFT_MK_CONSTANT_STRING(inf, "inf");
+LEAN_HOVERCRAFT_MK_CONSTANT_STRING(neginf, "-inf");
+
 extern "C" LEAN_EXPORT lean_obj_res lean_hovercraft_float_to_string_infinite(double x) {
     if (std::isfinite(x)) {
         return lean_hovercraft_float_to_string_finite(x);
     } else {
         if (std::isnan(x)) {
-            return lean_mk_string("NaN");
+            return &const_nan_str.m_string.m_header;
         } else if (std::signbit(x)) {
-            return lean_mk_string("-inf");
+            return &const_neginf_str.m_string.m_header;
         } else {
-            return lean_mk_string("inf");
+            return &const_inf_str.m_string.m_header;
         }
     }
 }
@@ -60,26 +83,27 @@ extern "C" LEAN_EXPORT lean_obj_res lean_hovercraft_string_push_float_finite(lea
     return r;
 }
 
-
 extern "C" LEAN_EXPORT lean_obj_res lean_hovercraft_string_push_float_infinite(lean_obj_arg s, double x) {
     if (std::isfinite(x)) {
         return lean_hovercraft_string_push_float_finite(s, x);
     } else {
-        const char * data;
-        auto sz = lean_string_size(s);
-        if (std::isnan(x)) {
-          data = "NaN";
-        } else if (std::signbit(x)) {
-          data = "-inf";
-        } else {
-          data = "inf";
+        auto copy = [](lean_obj_res s, size_t extra, const char * data) LEAN_ALWAYS_INLINE {
+          auto sz = lean_string_size(s);
+          auto r = prepare_for_modfication(s, extra);
+          for (size_t i = 0; i <= extra; i++) {
+            const_cast<char*>(lean_string_cstr(r))[sz + i - 1] = data[i];
+          }
+          lean_to_string(r)->m_size += extra;
+          lean_to_string(r)->m_length += extra;
+          return r;
         };
-        auto extra = strlen(data);
-        auto r = prepare_for_modfication(s, extra);
-        memcpy(const_cast<char*>(lean_string_cstr(r)) + sz - 1, data, extra + 1);
-        lean_to_string(r)->m_size += extra;
-        lean_to_string(r)->m_length += extra;
-        return r;
+        if (std::isnan(x)) {
+          return copy(s, 3, "NaN");
+        } else if (std::signbit(x)) {
+          return copy(s, 4, "-inf");
+        } else {
+          return copy(s, 3, "inf");
+        }
     }
 }
 
